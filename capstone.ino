@@ -81,6 +81,7 @@ float distanceInch;
   int PotValue_1, PotValue_2;
   int Adjusted_Main_Level, Adjusted_Reservoir_Level;
   int dump, water;
+  int Threshold;
   bool state;
   float Soil;
   char status_koneksi[8] = "Offline";
@@ -178,6 +179,29 @@ void Test_Pump(){
   }
 }
 
+void Adjust_Pump() {
+  if (water == 1) {
+    pinMode(pump2, HIGH);
+  } else {
+    pinMode(pump2, LOW);
+  }
+  if (Main_Level <= Adjusted_Reservoir_Level) {
+    if (Reservoir_Level >= 3) {
+      pinMode(pump1, HIGH);
+    } else {
+      pinMode(pump1, LOW);
+    }
+  }else if (Main_Level >= Adjusted_Main_Level) {
+    if (Soil >= Threshold || Reservoir_Level <= 14) {
+      pinMode(pump4, HIGH);
+      pinMode(pump1, LOW);
+      pinMode(pump2, LOW);
+      // pinMode(pump3, LOW);
+    }
+    
+  }
+}
+
 void Production() {
   Read_Inputs();
  
@@ -246,6 +270,11 @@ BLYNK_WRITE(V0)
   // You can also use:
   // String i = param.asStr();
   // double d = param.asDouble();
+  if (water == 1) {
+    pinMode(pump2, HIGH);
+  } else {
+    pinMode(pump2, LOW);
+  }
   Serial.print("water button value is: ");
   Serial.println(water);
 }
@@ -256,6 +285,11 @@ BLYNK_WRITE(V1)
   // You can also use:
   // String i = param.asStr();
   // double d = param.asDouble();
+  if (dump == 1) {
+    pinMode(pump3, HIGH);
+  } else {
+    pinMode(pump3, LOW);
+  }
   Serial.print("dump button value is: ");
   Serial.println(dump);
 }
@@ -308,6 +342,7 @@ void loop() {
 
   if (state == true || WiFi.status() != WL_CONNECTED) {
     Production();
+    Blynk.disconnect();
     strcpy(status_koneksi, "Offline");
   }else {
     Serial.println("Run Blynk");
@@ -315,7 +350,7 @@ void loop() {
     Blynk.run();
     strcpy(status_koneksi, "Online");
   }
-
+  Adjust_Pump();
   Display_Level();
 
   // if (!client.connected()) {
